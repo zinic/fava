@@ -5,7 +5,7 @@
 
     <groupId>net.jps.fava</groupId>
     <artifactId>fava-lib</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
 
     <name>Fava - Functional Java</name>
     
