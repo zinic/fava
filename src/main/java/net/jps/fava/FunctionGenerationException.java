@@ -11,8 +11,10 @@ package net.jps.fava;
 public class FunctionGenerationException extends RuntimeException {
 
     public FunctionGenerationException(String message, Throwable cause) {
+        super(message, cause);
     }
 
     public FunctionGenerationException(String message) {
+        super(message);
     }
 }

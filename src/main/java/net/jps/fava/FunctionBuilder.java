@@ -8,6 +8,10 @@ import net.jps.fava.reflection.Boxer;
 import net.jps.fava.reflection.ReflectionTools;
 
 import java.lang.reflect.Method;
+import java.util.LinkedList;
+import java.util.List;
+import javassist.ClassClassPath;
+import javassist.ClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtConstructor;
@@ -23,6 +27,7 @@ import javassist.Modifier;
 public class FunctionBuilder {
 
     private final ClassPool classPoolReference;
+    private final List<ClassPath> classPaths;
 
     public FunctionBuilder() {
         this(ClassPool.getDefault());
@@ -30,6 +35,29 @@ public class FunctionBuilder {
 
     public FunctionBuilder(ClassPool classPoolReference) {
         this.classPoolReference = classPoolReference;
+
+        classPaths = new LinkedList<ClassPath>();
+    }
+
+    private CtClass getClassFromPool(Class<?> targetClass) {
+        final String className = targetClass.getName();
+
+        final CtClass targetCtClass = classPoolReference.getOrNull(className);
+
+        if (targetCtClass == null) {
+            final ClassPath classPathLocator = new ClassClassPath(targetClass);
+
+            synchronized (classPoolReference) {
+                if (!classPaths.contains(classPathLocator)) {
+                    classPoolReference.insertClassPath(classPathLocator);
+                    classPaths.add(classPathLocator);
+
+                    return classPoolReference.getOrNull(className);
+                }
+            }
+        }
+
+        return targetCtClass;
     }
 
     public function define(Partial target) throws FunctionGenerationException, IllegalArgumentException {
@@ -49,8 +77,7 @@ public class FunctionBuilder {
         final String syntheticClassName = targetClass.getName() + "$_SyntheticInvocable";
 
         try {
-            final CtClass targetCtClass = classPoolReference.get(targetClass.getName());
-
+            final CtClass targetCtClass = getClassFromPool(targetClass);
             CtClass freshInvoker = classPoolReference.getOrNull(syntheticClassName);
 
             if (freshInvoker == null) {
