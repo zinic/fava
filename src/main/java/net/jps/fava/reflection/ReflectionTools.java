@@ -1,5 +1,5 @@
 /*
- *  Copyright 2010 John Hopper
+ *  Copyright 2010 Rackspace.
  * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,6 +32,18 @@ public class ReflectionTools {
         }
     }
 
+    public static Class<?> getCallerClassFromStackTrace(int depth) throws ClassNotFoundException {
+        final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+
+        if (stackTrace != null && stackTrace.length > depth) {
+            final String className = stackTrace[depth].getClassName();
+
+            return Class.forName(className);
+        }
+
+        return null;
+    }
+
     public static <T> T construct(Class<T> c, Object... parameters) {
         try {
             final Constructor<T> constructor = getConstructor(c, toClassArray(parameters));
@@ -40,13 +52,10 @@ public class ReflectionTools {
                 return constructor.newInstance(parameters);
             }
 
-            //TODO: throw expcetion
-//            localLogger.error("No constructors for class " + c.getCanonicalName() + " answer to constructor");
+            throw new NoSuchMethodException("No constructors for class " + c.getCanonicalName() + " answer to given parameter list");
         } catch (Exception instanciationException) {
-//            localLogger.error("Failed to create new instance of class: " + c.getCanonicalName(), instanciationException);
+            throw new ReflectionException("Failed to create new instance of class: " + c.getCanonicalName() + ". Pump cause for more detaisl.", instanciationException);
         }
-
-        throw new RuntimeException("Failed to create new exception instance for class: " + c.getCanonicalName());
     }
 
     public static Class<?>[] objectArrayToClassArray(Object[] o) {
